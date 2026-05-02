@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Motor_F103_TB6612 Debug",
+            "type": "process",
+            "command": "C:/Program Files/JetBrains/CLion 2026.1/bin/cmake/win/x64/bin/cmake.exe",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/Debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Flash Motor_F103_TB6612",
+            "type": "process",
+            "command": "C:/0Embedded/ClionToolChains/OpenOCD-20231002-0.12.0/bin/openocd.EXE",
+            "args": [
+                "-f",
+                "interface/stlink.cfg",
+                "-c",
+                "set CPUTAPID 0x2ba01477",
+                "-f",
+                "target/stm32f1x.cfg",
+                "-c",
+                "program {${workspaceFolder}/build/Debug/Motor_F103_TB6612.elf} verify",
+                "-c",
+                "reset",
+                "-c",
+                "exit"
+            ],
+            "dependsOn": "Build Motor_F103_TB6612 Debug",
+            "problemMatcher": []
+        }
+    ]
+}

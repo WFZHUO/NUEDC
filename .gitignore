@@ -1,0 +1,52 @@
+# Build
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+Testing/
+cmake_install.cmake
+Makefile
+.ninja_*
+*.ninja
+
+# Compile output
+*.o
+*.obj
+*.d
+*.a
+*.lib
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.su
+
+# STM32Cube / generated temp
+mx.scratch/
+*.launch
+
+# IDE / Editor
+.idea/
+.settings/
+
+# VS Code cache
+**/.vscode/.browse.c_cpp.db*
+**/.vscode/ipch/
+
+# Keep useful VS Code project configs
+!**/.vscode/
+!**/.vscode/tasks.json
+!**/.vscode/settings.json
+!**/.vscode/c_cpp_properties.json
+!**/.vscode/launch.json
+
+# Tooling cache
+.cache/
+
+# OS / temp
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
