@@ -1,52 +1,89 @@
-# Build
+# =============================================================================
+# Build directories
+# =============================================================================
+
 build/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
-compile_commands.json
 Testing/
 cmake_install.cmake
 Makefile
 .ninja_*
 *.ninja
 
-# Compile output
+# CCS / Eclipse build outputs
+**/Debug/
+**/Release/
+
+# =============================================================================
+# Compile outputs
+# =============================================================================
+
 *.o
 *.obj
 *.d
 *.a
 *.lib
 *.elf
+*.out
 *.bin
 *.hex
 *.map
 *.lst
 *.su
 
-# STM32Cube / generated temp
+# =============================================================================
+# STM32Cube / generated temporary files
+# =============================================================================
+
 mx.scratch/
 *.launch
 
-# IDE / Editor
-.idea/
-.settings/
+# =============================================================================
+# IDE / editor caches
+# =============================================================================
 
-# VS Code cache
+.idea/
+.metadata/
+.cache/
+
+# VS Code cache: keep useful project configuration files
 **/.vscode/.browse.c_cpp.db*
 **/.vscode/ipch/
 
-# Keep useful VS Code project configs
 !**/.vscode/
 !**/.vscode/tasks.json
 !**/.vscode/settings.json
 !**/.vscode/c_cpp_properties.json
 !**/.vscode/launch.json
 
-# Tooling cache
-.cache/
+# =============================================================================
+# Python / OS / temporary files
+# =============================================================================
 
-# OS / temp
+__pycache__/
+*.pyc
 .DS_Store
 Thumbs.db
 *.log
 *.tmp
+
+# =============================================================================
+# Do NOT ignore the following project metadata
+# =============================================================================
+#
+# CCS project files should be committed:
+#   .project
+#   .cproject
+#   .ccsproject
+#   .settings/
+#   targetConfigs/
+#   *.syscfg
+#
+# STM32 project files should be committed:
+#   *.ioc
+#   CMakeLists.txt
+#   CMakePresets.json
+#   cmake/
+#

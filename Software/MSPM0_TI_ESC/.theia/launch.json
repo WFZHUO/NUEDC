@@ -1,0 +1,16 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MSPM0_TI_ESC_2MOTOR_1M_1KHZ",
+      "type": "ccs-debug",
+      "request": "launch",
+      "projectInfo": {
+        "name": "MSPM0_TI_ESC_2MOTOR_1M_1KHZ",
+        "resourceId": "/MSPM0_TI_ESC_2MOTOR_1M_1KHZ"
+      }
+    }
+  ]
+}
