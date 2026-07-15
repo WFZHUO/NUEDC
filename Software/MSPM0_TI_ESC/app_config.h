@@ -1,8 +1,8 @@
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <ti/devices/msp/msp.h>
 #include <ti/driverlib/driverlib.h>
 
@@ -13,19 +13,34 @@
  */
 
 #define APP_MCLK_HZ                 (80000000UL)
+#define APP_ULPCLK_HZ               (APP_MCLK_HZ / 2UL)
 #define APP_SYSTICK_HZ              (1000UL)
 #define APP_SYSTICK_RELOAD          (APP_MCLK_HZ / APP_SYSTICK_HZ)
 #define POWER_STARTUP_DELAY         (16U)
 
+/* TIMG8/TIMG12 use BUSCLK. With ULPCLK_DIV_2, BUSCLK is 40 MHz.
+ * The serial protocol still uses -4000..+4000 as the normalized PWM command;
+ * it is scaled to the actual 20 kHz timer period below.
+ */
 #define PWM_FREQ_HZ                 (20000UL)
-#define PWM_PERIOD_TICKS            (APP_MCLK_HZ / PWM_FREQ_HZ)  /* 4000 @ 80 MHz */
+#define PWM_TIMER_CLOCK_HZ          (APP_ULPCLK_HZ)
+#define PWM_PERIOD_TICKS            (PWM_TIMER_CLOCK_HZ / PWM_FREQ_HZ) /* 2000 @ 40 MHz */
 #define PWM_ABS_MAX                 (4000)
 
 #define FEEDBACK_PERIOD_MS          (1U)      /* 1 kHz feedback */
-#define ENCODER_SPEED_WINDOW_MS     (10U)     /* rolling 10 ms speed window, updated every 1 ms */
-#define COMMAND_TIMEOUT_MS          (100U)    /* no valid motor command => stop */
+#define ENCODER_SPEED_WINDOW_MS     (10U)     /* rolling 10 ms speed window */
+#define COMMAND_TIMEOUT_MS          (100U)    /* no valid PWM/STOP command => stop */
+#define RX_FRAME_TIMEOUT_MS         (5U)      /* discard an incomplete frame after a gap */
 
-/* The current software quadrature decoder counts every valid A/B transition.
+#if ((PWM_TIMER_CLOCK_HZ % PWM_FREQ_HZ) != 0U)
+#error "PWM timer clock must be divisible by PWM frequency"
+#endif
+
+#if (PWM_PERIOD_TICKS < 2U)
+#error "PWM period is too small"
+#endif
+
+/* The software quadrature decoder counts every valid A/B transition.
  * The exact output-shaft counts per revolution must be verified on the real motor.
  */
 #define ENCODER_SPEED_MIN           (-32768)
@@ -39,14 +54,12 @@
 #define PROTOCOL_CMD_FEEDBACK       (0x90U)
 #define PROTOCOL_CMD_PONG           (0x91U)
 
-/* Compact two-motor protocol payload lengths. */
-#define PROTOCOL_SET_PWM_LEN        (4U)  /* pwm_a i16 + pwm_b i16 */
-#define PROTOCOL_FEEDBACK_LEN       (13U) /* count_a i32 + count_b i32 + speed_a i16 + speed_b i16 + status u8 */
+#define PROTOCOL_SET_PWM_LEN        (4U)
+#define PROTOCOL_FEEDBACK_LEN       (13U)
 
 #define PROTOCOL_STATUS_CMD_ACTIVE  (1U << 0)
 #define PROTOCOL_STATUS_TIMEOUT     (1U << 1)
 
-/* Only two logical motors exist in this build. */
 typedef enum {
     MOTOR_A = 0,
     MOTOR_B = 1,
@@ -54,9 +67,8 @@ typedef enum {
 } Motor_ID_t;
 
 /* ---------------- Motor GPIO mapping ----------------
- * Motor A: PWM_A PA3,  DIR PA31, EN(nSLEEP) PA4,  ENC_A PB24, ENC_B PA22
- * Motor B: PWM_B PB20, DIR PA18, EN(nSLEEP) PA17, ENC_A PB19, ENC_B PA21
- * Unused C/D nSLEEP pins are still driven low for safety.
+ * Motor A: PWM PA3,  DIR PA31, nSLEEP PA4,  ENC_A PB24, ENC_B PA22
+ * Motor B: PWM PB20, DIR PA18, nSLEEP PA17, ENC_A PB19, ENC_B PA21
  */
 
 #define MA_DIR_PORT                 GPIOA
@@ -75,7 +87,7 @@ typedef enum {
 #define MB_EN_PIN                   DL_GPIO_PIN_17
 #define MB_EN_IOMUX                 IOMUX_PINCM39
 
-/* C/D are unused but their driver sleep pins are forced low. */
+/* C/D are unused; their driver sleep pins remain low. */
 #define MC_EN_PORT                  GPIOB
 #define MC_EN_PIN                   DL_GPIO_PIN_3
 #define MC_EN_IOMUX                 IOMUX_PINCM16
@@ -89,11 +101,15 @@ typedef enum {
 #define LED_IOMUX                   IOMUX_PINCM11
 
 /* PWM pins/peripherals */
+#define PWM_A_PORT                  GPIOA
+#define PWM_A_PIN                   DL_GPIO_PIN_3
 #define PWM_A_INST                  TIMG8
 #define PWM_A_CC_INDEX              DL_TIMER_CC_0_INDEX
 #define PWM_A_IOMUX                 IOMUX_PINCM8
 #define PWM_A_IOMUX_FUNC            IOMUX_PINCM8_PF_TIMG8_CCP0
 
+#define PWM_B_PORT                  GPIOB
+#define PWM_B_PIN                   DL_GPIO_PIN_20
 #define PWM_B_INST                  TIMG12
 #define PWM_B_CC_INDEX              DL_TIMER_CC_0_INDEX
 #define PWM_B_IOMUX                 IOMUX_PINCM48
@@ -118,7 +134,7 @@ typedef enum {
 #define ENCODER_GPIOB_MASK          (MA_ENCA_PIN | MB_ENCA_PIN)
 
 /* UART mapping: board exposes RX on PA11 and TX on PB6.
- * These are not the same UART instance, so RX uses UART0_RX and TX uses UART1_TX.
+ * They belong to different UART instances, so RX uses UART0 and TX uses UART1.
  */
 #define HOST_RX_UART                UART0
 #define HOST_RX_IRQN                UART0_INT_IRQn
