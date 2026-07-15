@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Configure NUEDC H723 Debug",
+      "type": "process",
+      "command": "C:/Program Files/JetBrains/CLion 2026.1/bin/cmake/win/x64/bin/cmake.exe",
+      "args": [
+        "--preset",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build NUEDC H723 Debug",
+      "type": "process",
+      "command": "C:/Program Files/JetBrains/CLion 2026.1/bin/cmake/win/x64/bin/cmake.exe",
+      "args": [
+        "--build",
+        "--preset",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Configure NUEDC H723 Debug",
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash NUEDC H723 Debug",
+      "type": "process",
+      "command": "C:/0Embedded/ClionToolChains/OpenOCD-20231002-0.12.0/bin/openocd.exe",
+      "args": [
+        "-f",
+        "interface/stlink.cfg",
+        "-f",
+        "target/stm32h7x.cfg",
+        "-c",
+        "program {${workspaceFolder}/build/Debug/NUEDC_H723_MainControl.elf} verify",
+        "-c",
+        "reset run",
+        "-c",
+        "exit"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Build NUEDC H723 Debug",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

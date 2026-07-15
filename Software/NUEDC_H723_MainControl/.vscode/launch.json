@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "stlinkgdbtarget",
+      "request": "launch",
+      "name": "Debug NUEDC H723 (ST-Link)",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build NUEDC H723 Debug",
+      "runEntry": "main",
+      "serverInterface": "SWD",
+      "serverReset": "Software system reset",
+      "serverShared": false,
+      "imagesAndSymbols": [
+        {
+          "imageFileName": "${workspaceFolder}/build/Debug/NUEDC_H723_MainControl.elf"
+        }
+      ]
+    }
+  ]
+}
