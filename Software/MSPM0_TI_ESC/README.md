@@ -47,6 +47,3 @@ board.syscfg    CCS SysConfig配置文件
 ## 各说明文件
 
 - `HOST_PROTOCOL.md`：达妙 H723 与 TI 板之间的完整串口协议；
-- `MOTOR_WIRING.md`：电机接口、编码器线序和供电注意事项；
-- `TEST_FRAMES.md`：可直接复制到串口助手中的测试帧；
-- `REVIEW_NOTE.md`：当前版本的修改和审核记录。
