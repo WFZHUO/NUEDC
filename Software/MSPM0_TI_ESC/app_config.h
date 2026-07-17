@@ -145,7 +145,7 @@ typedef enum {
 #define HOST_TX_IOMUX               IOMUX_PINCM23
 #define HOST_TX_IOMUX_FUNC          IOMUX_PINCM23_PF_UART1_TX
 
-#define HOST_UART_CLOCK_HZ          (4000000UL)
-#define HOST_UART_BAUD              (1000000UL)
+#define HOST_UART_CLOCK_HZ          (40000000UL) /* BUSCLK = 40 MHz */
+#define HOST_UART_BAUD              (500000UL)
 
 #endif

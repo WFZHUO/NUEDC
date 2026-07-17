@@ -3,7 +3,7 @@
 本工程仅使用驱动板的 **A、B 两个电机通道**。
 
 - 电机 C、D 通道保持休眠，不输出 PWM；
-- 串口波特率为 **1,000,000 baud，8N1**；
+- 串口波特率为 **500,000 baud，8N1**；
 - TI 板每 **1 ms（1 kHz）**发送一次反馈；
 - 达妙 H723 向 TI 板发送两个电机的 PWM 目标值；
 - TI 板负责产生 PWM、控制方向、采集编码器并回传数据；
@@ -36,7 +36,7 @@
 main.c          程序入口、1 ms任务调度、中断入口、LED心跳
 protocol.c/h    双电机串口协议、反馈发送、超时停车
 bsp_board.c/h   电源、时钟、LED以及各模块初始化
-bsp_uart.c/h    1 Mbps UART收发驱动
+bsp_uart.c/h    500 Kbps UART收发驱动
 bsp_motor.c/h   A/B电机PWM、方向和驱动器使能
 bsp_encoder.c/h A/B编码器解码、累计计数和速度计算
 crc16.c/h       Modbus CRC16校验

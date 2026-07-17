@@ -59,7 +59,7 @@ Software/MSPM0_TI_ESC
 - A、B 两路电机 PWM 与方向控制
 - C、D 两路驱动保持禁用
 - 双路编码器累计计数与速度采集
-- 1 Mbps 全双工 UART
+- 500 Kbps 全双工 UART
 - 1 kHz 控制命令与反馈
 - CRC16 通信校验
 - 通信超时自动停车
@@ -98,7 +98,7 @@ Software/NUEDC_H723_MainControl
 当前定位：
 
 - 作为电赛小车的上层主控
-- 与 MSPM0 电机驱动板进行 1 Mbps UART 通信
+- 与 MSPM0 电机驱动板进行 500 Kbps UART 通信
 - 接收双路编码器和速度反馈
 - 在 H723 上运行速度 PID
 - 后续实现底盘运动控制
@@ -141,12 +141,7 @@ NUEDC
    └─ 从哨兵底层框架复制出的电赛主控工程
 ```
 
-两个工程即使存在同名源码文件，也属于不同磁盘路径和不同 Git 仓库：
-
-- 修改 `NUEDC_H723_MainControl` 不会自动修改原哨兵工程。
-- 修改原哨兵工程也不会自动同步到电赛主控工程。
 - 后续公共底层模块的修复需要人工选择性同步。
-- `NUEDC_H723_MainControl` 内不得存在独立的 `.git/` 目录，避免形成嵌套仓库。
 
 ## 仓库约定
 
@@ -157,4 +152,3 @@ NUEDC
 - STM32 的 `.ioc`、`CMakeLists.txt`、`CMakePresets.json`、`cmake/` 和用户源码需要保留。
 - 仓库统一使用根目录 `.gitignore` 管理忽略规则。
 - 每个独立工程应在自己的目录中维护 `README.md`。
-- 提交前使用 `git status` 检查文件，避免误提交构建目录或临时文件。
