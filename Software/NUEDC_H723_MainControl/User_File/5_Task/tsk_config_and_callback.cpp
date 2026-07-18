@@ -26,7 +26,7 @@
 #include "dvc_serialplot.h"
 #include "dvc_motor_dji.h"
 #include "dvc_vofa.h"
-#include "dvc_motor_ti.h"
+#include "crt_chassis.h"
 
 /* Macros --------------------------------------------------------------------*/
 
@@ -60,11 +60,12 @@ float Waveform_Sine_Out;
 // C620
 Class_Motor_DJI_C620 Motor_C620;
 
-// TI
-Class_Motor_TI Motor_TI;
+// 两轮差速底盘
+Class_Chassis Chassis;
 float Motor_TI_A_Now_Encoder, Motor_TI_B_Now_Encoder, Motor_TI_A_Now_Omega, Motor_TI_B_Now_Omega, Motor_TI_A_Now_Angle, Motor_TI_B_Now_Angle;
 float Motor_TI_A_PWM_Out, Motor_TI_B_PWM_Out, Motor_TI_A_Target_Omega, Motor_TI_B_Target_Omega, Motor_TI_A_Target_Angle, Motor_TI_B_Target_Angle;
 float Motor_TI_To_H7_Is_ok, Motor_H7_To_TI_Is_ok;
+float Chassis_Now_Velocity_X, Chassis_Now_Omega, Chassis_Target_Velocity_X, Chassis_Target_Omega;
 
 // 全局初始化完成标志位
 bool init_finished = false;
@@ -86,7 +87,7 @@ void UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 void UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    Motor_TI.UART_RxCpltCallback(Buffer, Length);
+    Chassis.UART_RxCpltCallback(Buffer, Length);
 
     //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
 }
@@ -101,27 +102,27 @@ void USB0_Callback(uint8_t *Buffer, uint32_t Length)
     switch (Serialplot.Get_Variable_Index())
     {
         case 0:
-            Motor_TI.Motor_A.PID_Omega.Set_K_P(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Omega.Set_K_P(Serialplot.Get_Variable_Value());
             break;
 
         case 1:
-            Motor_TI.Motor_A.PID_Omega.Set_K_I(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Omega.Set_K_I(Serialplot.Get_Variable_Value());
             break;
 
         case 2:
-            Motor_TI.Motor_A.PID_Omega.Set_K_D(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Omega.Set_K_D(Serialplot.Get_Variable_Value());
             break;
 
         case 3:
-            Motor_TI.Motor_A.PID_Angle.Set_K_P(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Angle.Set_K_P(Serialplot.Get_Variable_Value());
             break;
 
         case 4:
-            Motor_TI.Motor_A.PID_Angle.Set_K_I(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Angle.Set_K_I(Serialplot.Get_Variable_Value());
             break;
 
         case 5:
-            Motor_TI.Motor_A.PID_Angle.Set_K_D(Serialplot.Get_Variable_Value());
+            Chassis.Motor_TI.Motor_A.PID_Angle.Set_K_D(Serialplot.Get_Variable_Value());
             break;
 
         case 6:
@@ -192,20 +193,24 @@ void Task1ms_Callback()
     Motor_C620_Target_Omega = Motor_C620.Get_Target_Omega();
     Motor_C620_Target_Current = Motor_C620.Get_Target_Current();
 
-    Motor_TI_A_Now_Encoder = Motor_TI.Motor_A.Get_Now_Encoder();
-    Motor_TI_B_Now_Encoder = Motor_TI.Motor_B.Get_Now_Encoder();
-    Motor_TI_A_Now_Omega = Motor_TI.Motor_A.Get_Now_Omega();
-    Motor_TI_B_Now_Omega = Motor_TI.Motor_B.Get_Now_Omega();
-    Motor_TI_A_Now_Angle = Motor_TI.Motor_A.Get_Now_Angle();
-    Motor_TI_B_Now_Angle = Motor_TI.Motor_B.Get_Now_Angle();
-    Motor_TI_A_PWM_Out = Motor_TI.Motor_A.Get_Out();
-    Motor_TI_B_PWM_Out = Motor_TI.Motor_B.Get_Out();
-    Motor_TI_A_Target_Omega = Motor_TI.Motor_A.Get_Target_Omega();
-    Motor_TI_B_Target_Omega = Motor_TI.Motor_B.Get_Target_Omega();
-    Motor_TI_A_Target_Angle = Motor_TI.Motor_A.Get_Target_Angle();
-    Motor_TI_B_Target_Angle = Motor_TI.Motor_B.Get_Target_Angle();
-    Motor_TI_To_H7_Is_ok = Motor_TI.Is_Online();
-    Motor_H7_To_TI_Is_ok = !Motor_TI.Get_Remote_Command_Timeout();
+    Motor_TI_A_Now_Encoder = Chassis.Motor_TI.Motor_A.Get_Now_Encoder();
+    Motor_TI_B_Now_Encoder = Chassis.Motor_TI.Motor_B.Get_Now_Encoder();
+    Motor_TI_A_Now_Omega = Chassis.Motor_TI.Motor_A.Get_Now_Omega();
+    Motor_TI_B_Now_Omega = Chassis.Motor_TI.Motor_B.Get_Now_Omega();
+    Motor_TI_A_Now_Angle = Chassis.Motor_TI.Motor_A.Get_Now_Angle();
+    Motor_TI_B_Now_Angle = Chassis.Motor_TI.Motor_B.Get_Now_Angle();
+    Motor_TI_A_PWM_Out = Chassis.Motor_TI.Motor_A.Get_Out();
+    Motor_TI_B_PWM_Out = Chassis.Motor_TI.Motor_B.Get_Out();
+    Motor_TI_A_Target_Omega = Chassis.Motor_TI.Motor_A.Get_Target_Omega();
+    Motor_TI_B_Target_Omega = Chassis.Motor_TI.Motor_B.Get_Target_Omega();
+    Motor_TI_A_Target_Angle = Chassis.Motor_TI.Motor_A.Get_Target_Angle();
+    Motor_TI_B_Target_Angle = Chassis.Motor_TI.Motor_B.Get_Target_Angle();
+    Motor_TI_To_H7_Is_ok = Chassis.Motor_TI.Is_Online();
+    Motor_H7_To_TI_Is_ok = !Chassis.Motor_TI.Get_Remote_Command_Timeout();
+    Chassis_Now_Velocity_X = Chassis.Get_Now_Velocity_X();
+    Chassis_Now_Omega = Chassis.Get_Now_Omega();
+    Chassis_Target_Velocity_X = Chassis.Get_Resolved_Target_Velocity_X();
+    Chassis_Target_Omega = Chassis.Get_Resolved_Target_Omega();
 
     Serialplot.TIM_1ms_Write_PeriodElapsedCallback();
 
@@ -214,11 +219,11 @@ void Task1ms_Callback()
     Motor_C620.TIM_Calculate_PeriodElapsedCallback();
     Motor_DJI_CAN_Tx_PeriodElapsedCallback(&hfdcan1);
 
-    // TI电机控制
-    Motor_TI.Motor_A.Set_Target_Omega(Waveform_Sine_Out);
-    Motor_TI.Motor_B.Set_Target_Omega(Waveform_Sine_Out);
-    Motor_TI.TIM_1ms_Calculate_PeriodElapsedCallback();
-    Motor_TI.TIM_1ms_Write_PeriodElapsedCallback();
+    // 底盘控制，沿用原电机角速度测试波形并乘轮半径转换为整车线速度
+    Chassis.Set_Target_Velocity_X(Waveform_Sine_Out * Chassis.Get_Wheel_Radius());
+    Chassis.Set_Target_Omega(Waveform_Sine_Out);
+    Chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
+    Chassis.TIM_1ms_Write_PeriodElapsedCallback();
 
     // 10ms任务
     static uint16_t mod10 = 0;
@@ -278,7 +283,7 @@ void Task_Init()
     BSP_WS2812.Init(&hspi6);
     // 初始化Serialplot
     Serialplot.Init(7, Serialplot_Rx_List);
-    Serialplot.Set_Data(15,
+    Serialplot.Set_Data(19,
                         &Waveform_Sine_Out,
                         &Motor_TI_A_Now_Encoder,
                         &Motor_TI_B_Now_Encoder,
@@ -293,7 +298,11 @@ void Task_Init()
                         &Motor_TI_A_Target_Angle,
                         &Motor_TI_B_Target_Angle,
                         &Motor_TI_To_H7_Is_ok,
-                        &Motor_H7_To_TI_Is_ok);
+                        &Motor_H7_To_TI_Is_ok,
+                        &Chassis_Now_Velocity_X,
+                        &Chassis_Now_Omega,
+                        &Chassis_Target_Velocity_X,
+                        &Chassis_Target_Omega);
 
     // 初始化波形
     Waveform_Sine.Init();
@@ -321,16 +330,9 @@ void Task_Init()
     Motor_C620.PID_Omega.Init(0.0f, 0.0f, 0.0f);
     Motor_C620.PID_Angle.Init(0.0f, 0.0f, 0.0f);
 
-    // 初始化TI电机
-    Motor_TI.Init(&huart10, MOTOR_TI_ENCODER_NUM_PER_ROUND, Motor_TI_Direction_REVERSE, Motor_TI_Direction_REVERSE);
-
-    Motor_TI.Motor_A.Set_Control_Method(Motor_TI_Control_Method_OMEGA);
-    Motor_TI.Motor_A.PID_Omega.Init(125.0f, 1500.0f, 0.0f);
-    Motor_TI.Motor_A.PID_Angle.Init(25.0f, 0.0f, 0.0f);
-
-    Motor_TI.Motor_B.Set_Control_Method(Motor_TI_Control_Method_OMEGA);
-    Motor_TI.Motor_B.PID_Omega.Init(125.0f, 1500.0f, 0.0f);
-    Motor_TI.Motor_B.PID_Angle.Init(25.0f, 0.0f, 0.0f);
+    // 初始化两轮差速底盘
+    Chassis.Init(&huart10);
+    Chassis.Set_Control_State(Chassis_Control_State_NORMAL);
 
     // 初始化W25Q64JV
     BSP_W25Q64JV.Init(&hospi1);
