@@ -79,6 +79,8 @@ bool init_finished = false;
  */
 void UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
+    Chassis.UART_RxCpltCallback(Buffer, Length);
+
     //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
 }
 
@@ -87,8 +89,6 @@ void UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 void UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    Chassis.UART_RxCpltCallback(Buffer, Length);
-
     //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
 }
 
@@ -331,7 +331,7 @@ void Task_Init()
     Motor_C620.PID_Angle.Init(0.0f, 0.0f, 0.0f);
 
     // 初始化两轮差速底盘
-    Chassis.Init(&huart10);
+    Chassis.Init(&huart1);
     Chassis.Set_Control_State(Chassis_Control_State_NORMAL);
 
     // 初始化W25Q64JV
