@@ -27,6 +27,7 @@
 #include "dvc_motor_dji.h"
 #include "dvc_vofa.h"
 #include "crt_chassis.h"
+#include "dvc_dr16.h"
 
 /* Macros --------------------------------------------------------------------*/
 
@@ -67,6 +68,9 @@ float Motor_TI_A_PWM_Out, Motor_TI_B_PWM_Out, Motor_TI_A_Target_Omega, Motor_TI_
 float Motor_TI_To_H7_Is_ok, Motor_H7_To_TI_Is_ok;
 float Chassis_Now_Velocity_X, Chassis_Now_Omega, Chassis_Target_Velocity_X, Chassis_Target_Omega;
 
+// dr16
+float DR16_Left_X, DR16_Left_Y, DR16_Right_X, DR16_Right_Y, DR16_Yaw, DR16_Switch_L, DR16_Switch_R;
+
 // 全局初始化完成标志位
 bool init_finished = false;
 
@@ -90,6 +94,14 @@ void UART1_Callback(uint8_t *Buffer, uint16_t Length)
 void UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
+}
+
+/**
+ * @brief UART5任务回调函数
+ */
+void UART5_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    DR16.UART_RxCpltCallback(Buffer, Length);
 }
 
 /**
@@ -212,6 +224,14 @@ void Task1ms_Callback()
     Chassis_Target_Velocity_X = Chassis.Get_Resolved_Target_Velocity_X();
     Chassis_Target_Omega = Chassis.Get_Resolved_Target_Omega();
 
+    DR16_Left_X = DR16.Get_Left_X();
+    DR16_Left_Y = DR16.Get_Left_Y();
+    DR16_Right_X = DR16.Get_Right_X();
+    DR16_Right_Y = DR16.Get_Right_Y();
+    DR16_Yaw = DR16.Get_Yaw();
+    DR16_Switch_L = DR16.Get_Left_Switch();
+    DR16_Switch_R = DR16.Get_Right_Switch();
+
     Serialplot.TIM_1ms_Write_PeriodElapsedCallback();
 
     // 电机控制
@@ -248,6 +268,17 @@ void Task1ms_Callback()
         Class_ArkKey::TIM_Update_PeriodElapsedCallback();
     }    
 
+    // 50ms任务
+    static uint16_t mod50 = 0;
+    mod50++;
+    if (mod50 >= 50)
+    {
+        mod50 = 0;
+
+        // DR16遥控器在线状态检查
+        DR16.TIM_50ms_Alive_PeriodElapsedCallback();
+    }
+
     // 100ms任务
     static uint16_t mod100 = 0;
     mod100++;
@@ -283,26 +314,25 @@ void Task_Init()
     BSP_WS2812.Init(&hspi6);
     // 初始化Serialplot
     Serialplot.Init(7, Serialplot_Rx_List);
-    Serialplot.Set_Data(19,
+    Serialplot.Set_Data(18,
                         &Waveform_Sine_Out,
-                        &Motor_TI_A_Now_Encoder,
-                        &Motor_TI_B_Now_Encoder,
                         &Motor_TI_A_Now_Omega,
                         &Motor_TI_B_Now_Omega,
-                        &Motor_TI_A_Now_Angle,
-                        &Motor_TI_B_Now_Angle,
                         &Motor_TI_A_PWM_Out,
                         &Motor_TI_B_PWM_Out,
                         &Motor_TI_A_Target_Omega,
                         &Motor_TI_B_Target_Omega,
-                        &Motor_TI_A_Target_Angle,
-                        &Motor_TI_B_Target_Angle,
-                        &Motor_TI_To_H7_Is_ok,
-                        &Motor_H7_To_TI_Is_ok,
                         &Chassis_Now_Velocity_X,
                         &Chassis_Now_Omega,
                         &Chassis_Target_Velocity_X,
-                        &Chassis_Target_Omega);
+                        &Chassis_Target_Omega,
+                        &DR16_Left_X,
+                        &DR16_Left_Y,
+                        &DR16_Right_X,
+                        &DR16_Right_Y,
+                        &DR16_Yaw,
+                        &DR16_Switch_L,
+                        &DR16_Switch_R);
 
     // 初始化波形
     Waveform_Sine.Init();
@@ -316,6 +346,7 @@ void Task_Init()
     // 初始化UART
     UART_Init(&huart1, UART1_Callback);
     UART_Init(&huart10, UART10_Callback);
+    UART_Init(&huart5, UART5_Callback);
     // 初始化CAN
     CAN_Init(&hfdcan1, CAN1_Callback);
     // 初始化OSPI
@@ -336,6 +367,9 @@ void Task_Init()
 
     // 初始化W25Q64JV
     BSP_W25Q64JV.Init(&hospi1);
+
+    // 初始化DR16遥控器
+    DR16.Init(&huart5);
 
     // 设置初始化完成标志位
     init_finished = true;
