@@ -35,7 +35,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Flash NUEDC H723 Debug",
+      "label": "Flash NUEDC H723 Debug (ST-Link)",
       "type": "process",
       "command": "C:/0Embedded/ClionToolChains/OpenOCD-20231002-0.12.0/bin/openocd.exe",
       "args": [
@@ -49,6 +49,23 @@
         "reset run",
         "-c",
         "exit"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "Build NUEDC H723 Debug",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash NUEDC H723 Debug (PTD02HW)",
+      "type": "process",
+      "command": "C:/0Embedded/ToolChains/pyocd-venv/Scripts/pyocd.exe",
+      "args": [
+        "load",
+        "-u",
+        "cmsisdap:ATK-A0F2261F",
+        "${workspaceFolder}/build/Debug/NUEDC_H723_MainControl.elf"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

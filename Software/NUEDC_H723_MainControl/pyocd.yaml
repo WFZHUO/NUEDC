@@ -1,0 +1,7 @@
+probes:
+  ATK-A0F2261F:
+    target_override: stm32h723xx
+    frequency: 10000000
+    cmsis_dap.limit_packets: true
+    cmsis_dap.deferred_transfers: false
+    fast_program: true

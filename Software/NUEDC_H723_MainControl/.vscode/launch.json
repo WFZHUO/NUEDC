@@ -16,6 +16,29 @@
           "imageFileName": "${workspaceFolder}/build/Debug/NUEDC_H723_MainControl.elf"
         }
       ]
+    },
+    {
+      "type": "cortex-debug",
+      "request": "launch",
+      "name": "Debug NUEDC H723 (PTD02HW)",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build NUEDC H723 Debug",
+
+      "servertype": "pyocd",
+      "serverpath": "C:/0Embedded/ToolChains/pyocd-venv/Scripts/pyocd.exe",
+
+      "serverArgs": [
+        "--uid",
+        "cmsisdap:ATK-A0F2261F"
+      ],
+
+      "targetId": "stm32h723xx",
+      "executable": "${workspaceFolder}/build/Debug/NUEDC_H723_MainControl.elf",
+      "armToolchainPath": "${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin",
+
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "none",
+      "overrideGDBServerStartedRegex": "GDB server listening on port"
     }
   ]
 }
