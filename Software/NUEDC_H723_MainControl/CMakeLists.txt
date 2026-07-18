@@ -93,6 +93,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/2_Device/Motor/Motor_TI/dvc_motor_ti.cpp
     User_File/3_Chariot/Chassis/crt_chassis.cpp
     User_File/2_Device/DR16/dvc_dr16.cpp
+    User_File/4_Interaction/ita_robot.cpp
 )
 
 # Add include paths
@@ -119,6 +120,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/2_Device/Motor/Motor_TI
     User_File/3_Chariot/Chassis
     User_File/2_Device/DR16
+    User_File/4_Interaction
 )
 
 # Add project symbols (macros)

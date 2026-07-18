@@ -26,8 +26,9 @@
 #include "dvc_serialplot.h"
 #include "dvc_motor_dji.h"
 #include "dvc_vofa.h"
-#include "crt_chassis.h"
 #include "dvc_dr16.h"
+#include "crt_chassis.h"
+#include "ita_robot.h"
 
 /* Macros --------------------------------------------------------------------*/
 
@@ -239,9 +240,10 @@ void Task1ms_Callback()
     Motor_C620.TIM_Calculate_PeriodElapsedCallback();
     Motor_DJI_CAN_Tx_PeriodElapsedCallback(&hfdcan1);
 
-    // 底盘控制，沿用原电机角速度测试波形并乘轮半径转换为整车线速度
-    Chassis.Set_Target_Velocity_X(Waveform_Sine_Out * Chassis.Get_Wheel_Radius());
-    Chassis.Set_Target_Omega(Waveform_Sine_Out);
+    // 底盘控制
+    // dr16输入操作
+    Robot.TIM_1ms_Control_PeriodElapsedCallback();
+
     Chassis.TIM_1ms_Calculate_PeriodElapsedCallback();
     Chassis.TIM_1ms_Write_PeriodElapsedCallback();
 
@@ -363,13 +365,19 @@ void Task_Init()
 
     // 初始化两轮差速底盘
     Chassis.Init(&huart1);
-    Chassis.Set_Control_State(Chassis_Control_State_NORMAL);
+    Chassis.Set_Control_State(Chassis_Control_State_DISABLE);
 
     // 初始化W25Q64JV
     BSP_W25Q64JV.Init(&hospi1);
 
     // 初始化DR16遥控器
     DR16.Init(&huart5);
+
+    // 初始化整车人机交互控制类
+    Robot.Init(&DR16, &Chassis);
+    Robot.Set_Chassis_Max_Velocity_X(1.0f);
+    Robot.Set_Chassis_Max_Omega(6.00f);
+    Robot.Set_DR16_Dead_Zone(0.05f);
 
     // 设置初始化完成标志位
     init_finished = true;
