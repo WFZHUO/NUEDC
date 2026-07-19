@@ -16,6 +16,7 @@
 #include "drv_can.h"
 #include "drv_spi.h"
 #include "drv_ospi.h"
+#include "drv_adc.h"
 #include "sys_timestamp.h"
 #include "alg_waveform.h"
 #include "bsp_ws2812.h"
@@ -23,6 +24,7 @@
 #include "bsp_BuzzerSongs.h"
 #include "bsp_arkey.h"
 #include "bsp_w25q64jv.h"
+#include "bsp_power.h"
 #include "dvc_serialplot.h"
 #include "dvc_motor_dji.h"
 #include "dvc_vofa.h"
@@ -71,6 +73,9 @@ float Chassis_Now_Velocity_X, Chassis_Now_Omega, Chassis_Target_Velocity_X, Chas
 
 // dr16
 float DR16_Left_X, DR16_Left_Y, DR16_Right_X, DR16_Right_Y, DR16_Yaw, DR16_Switch_L, DR16_Switch_R;
+
+// ADC检测电源输入电压
+float VCC_IN_Voltage = 0.0f;
 
 // 全局初始化完成标志位
 bool init_finished = false;
@@ -190,7 +195,7 @@ void Task1ms_Callback()
     if(Key.isPressed)
     {
         // 按键测试, 按一次LED翻转一次
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
+        // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
     }
     Class_ArkKey::ClearAllFlags();
     
@@ -257,6 +262,10 @@ void Task1ms_Callback()
         // WS2812定时刷新
         BSP_WS2812.Rainbow();
         BSP_WS2812.TIM_10ms_Write_PeriodElapsedCallback();
+
+        // 电源电压检测和低压判断
+        BSP_Power.TIM_10ms_Update_PeriodElapsedCallback();
+        VCC_IN_Voltage = BSP_Power.Get_Power_Voltage();
     }
 
     // 15ms任务
@@ -314,9 +323,11 @@ void Task_Init()
     Key.Init(GPIOA, GPIO_PIN_15);
     // 初始化WS2812
     BSP_WS2812.Init(&hspi6);
+    // 初始化板载电源
+    BSP_Power.Init(&hadc1);
     // 初始化Serialplot
     Serialplot.Init(&huart10, 7, Serialplot_Rx_List);
-    Serialplot.Set_Data(18,
+    Serialplot.Set_Data(19,
                         &Waveform_Sine_Out,
                         &Motor_TI_A_Now_Omega,
                         &Motor_TI_B_Now_Omega,
@@ -334,7 +345,8 @@ void Task_Init()
                         &DR16_Right_Y,
                         &DR16_Yaw,
                         &DR16_Switch_L,
-                        &DR16_Switch_R);
+                        &DR16_Switch_R,
+                        &VCC_IN_Voltage);
 
     // 初始化波形
     Waveform_Sine.Init();
@@ -353,6 +365,8 @@ void Task_Init()
     CAN_Init(&hfdcan1, CAN1_Callback);
     // 初始化OSPI
     OSPI_Init(&hospi1, OSPI1_Callback);
+    // 初始化ADC1
+    ADC_Init(&hadc1, ADC_BUFFER_SIZE);
 
     // 定时器中断初始化
     HAL_TIM_Base_Start_IT(&htim7);
@@ -395,6 +409,9 @@ void Task_Loop()
         BuzzerSongs_Play_Godfather(1.0f);
         played = true;
     }
+    
+    // 处理电池低压报警
+    BSP_Power.Task_Loop();    
 }
 
 /*----------------------------------------------------------------------------*/

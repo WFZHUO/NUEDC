@@ -94,6 +94,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/3_Chariot/Chassis/crt_chassis.cpp
     User_File/2_Device/DR16/dvc_dr16.cpp
     User_File/4_Interaction/ita_robot.cpp
+    User_File/1_Middleware/Driver/ADC/drv_adc.cpp
+    User_File/2_Device/BSP/Power/bsp_power.cpp
 )
 
 # Add include paths
@@ -121,6 +123,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/3_Chariot/Chassis
     User_File/2_Device/DR16
     User_File/4_Interaction
+    User_File/1_Middleware/Driver/ADC
+    User_File/2_Device/BSP/Power
 )
 
 # Add project symbols (macros)
