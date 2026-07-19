@@ -40,7 +40,7 @@
 Class_ArkKey Key;
 
 // Serialplot
-Class_Serialplot_USB Serialplot;
+Class_Serialplot_UART Serialplot;
 const char *Serialplot_Rx_List[] =
 {
     "op",
@@ -94,23 +94,7 @@ void UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 void UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
-}
-
-/**
- * @brief UART5任务回调函数
- */
-void UART5_Callback(uint8_t *Buffer, uint16_t Length)
-{
-    DR16.UART_RxCpltCallback(Buffer, Length);
-}
-
-/**
- * @brief USB任务回调函数, 绑定Serialplot
- */
-void USB0_Callback(uint8_t *Buffer, uint32_t Length)
-{
-    Serialplot.USB_RxCpltCallback(Buffer, static_cast<uint16_t>(Length));
+    Serialplot.UART_RxCpltCallback(Buffer, static_cast<uint16_t>(Length));
 
     switch (Serialplot.Get_Variable_Index())
     {
@@ -146,6 +130,22 @@ void USB0_Callback(uint8_t *Buffer, uint32_t Length)
             break;
     }
 
+    //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
+}
+
+/**
+ * @brief UART5任务回调函数
+ */
+void UART5_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    DR16.UART_RxCpltCallback(Buffer, Length);
+}
+
+/**
+ * @brief USB任务回调函数
+ */
+void USB0_Callback(uint8_t *Buffer, uint32_t Length)
+{
     //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);   
 }
 
@@ -315,7 +315,7 @@ void Task_Init()
     // 初始化WS2812
     BSP_WS2812.Init(&hspi6);
     // 初始化Serialplot
-    Serialplot.Init(7, Serialplot_Rx_List);
+    Serialplot.Init(&huart10, 7, Serialplot_Rx_List);
     Serialplot.Set_Data(18,
                         &Waveform_Sine_Out,
                         &Motor_TI_A_Now_Omega,
@@ -377,7 +377,7 @@ void Task_Init()
     Robot.Init(&DR16, &Chassis);
     Robot.Set_Chassis_Max_Velocity_X(1.0f);
     Robot.Set_Chassis_Max_Omega(6.00f);
-    Robot.Set_DR16_Dead_Zone(0.05f);
+    Robot.Set_DR16_Dead_Zone(0.0f);
 
     // 设置初始化完成标志位
     init_finished = true;
