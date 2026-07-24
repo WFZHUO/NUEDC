@@ -400,16 +400,22 @@ extern "C" void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
         return;
     }
 
-    SPI_Deselect(spi_manage_object);
+    // 保存本次传输信息
+    SPI_Callback callback_function = spi_manage_object->Callback_Function;
+    uint8_t *tx_buffer = spi_manage_object->Tx_Buffer;
+    uint16_t tx_length = spi_manage_object->Tx_Buffer_Length;
 
+    // 结束本次传输
+    SPI_Deselect(spi_manage_object);
     SPI_Clear_Transfer_State(spi_manage_object);
 
-    if (spi_manage_object->Callback_Function != nullptr)
+    // 通知上层，此时上层可以立即发起下一次传输
+    if (callback_function != nullptr)
     {
-        spi_manage_object->Callback_Function(spi_manage_object->Tx_Buffer,
-                                             nullptr,
-                                             spi_manage_object->Tx_Buffer_Length,
-                                             0U);
+        callback_function(tx_buffer,
+                          nullptr,
+                          tx_length,
+                          0U);
     }
 }
 
@@ -427,20 +433,28 @@ extern "C" void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
         return;
     }
 
+    // 保存本次传输信息
+    SPI_Callback callback_function = spi_manage_object->Callback_Function;
+    uint8_t *tx_buffer = spi_manage_object->Tx_Buffer;
+    uint8_t *rx_buffer = spi_manage_object->Rx_Buffer;
+    uint16_t tx_length = spi_manage_object->Tx_Buffer_Length;
+    uint16_t rx_length = spi_manage_object->Rx_Buffer_Length;
+
+    // 更新接收时间戳并同步DCache
     spi_manage_object->Rx_Timestamp = SYS_Timestamp.Get_Current_Timestamp();
+    SPI_Rx_DCache_Invalidate(rx_buffer, rx_length);
 
-    SPI_Rx_DCache_Invalidate(spi_manage_object->Rx_Buffer, spi_manage_object->Rx_Buffer_Length);
-
+    // 结束本次传输
     SPI_Deselect(spi_manage_object);
-
     SPI_Clear_Transfer_State(spi_manage_object);
 
-    if (spi_manage_object->Callback_Function != nullptr)
+    // 通知上层，此时上层可以立即发起下一次传输
+    if (callback_function != nullptr)
     {
-        spi_manage_object->Callback_Function(spi_manage_object->Tx_Buffer,
-                                             spi_manage_object->Rx_Buffer,
-                                             spi_manage_object->Tx_Buffer_Length,
-                                             spi_manage_object->Rx_Buffer_Length);
+        callback_function(tx_buffer,
+                          rx_buffer,
+                          tx_length,
+                          rx_length);
     }
 }
 

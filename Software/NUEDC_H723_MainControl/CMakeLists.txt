@@ -96,6 +96,16 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/4_Interaction/ita_robot.cpp
     User_File/1_Middleware/Driver/ADC/drv_adc.cpp
     User_File/2_Device/BSP/Power/bsp_power.cpp
+    User_File/2_Device/BSP/BMI088/bsp_bmi088.cpp
+    User_File/2_Device/BSP/BMI088/Accel/bsp_bmi088_accel_register.cpp
+    User_File/2_Device/BSP/BMI088/Accel/bsp_bmi088_accel.cpp
+    User_File/2_Device/BSP/BMI088/Gyro/bsp_bmi088_gyro_register.cpp
+    User_File/2_Device/BSP/BMI088/Gyro/bsp_bmi088_gyro.cpp
+    User_File/1_Middleware/Algorithm/Attitude/alg_attitude.cpp
+    User_File/1_Middleware/Algorithm/Matrix/alg_matrix.cpp
+    User_File/1_Middleware/Algorithm/Quaternion/alg_quaternion.cpp
+    User_File/1_Middleware/Algorithm/Filter/EKF/alg_filter_ekf.cpp
+    User_File/1_Middleware/Algorithm/Attitude/alg_attitude_ekf.cpp
 )
 
 # Add include paths
@@ -125,6 +135,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     User_File/4_Interaction
     User_File/1_Middleware/Driver/ADC
     User_File/2_Device/BSP/Power
+    User_File/2_Device/BSP/BMI088
+    User_File/2_Device/BSP/BMI088/Accel
+    User_File/2_Device/BSP/BMI088/Gyro
+    User_File/1_Middleware/Algorithm/Attitude
+    User_File/1_Middleware/Algorithm/Matrix
+    User_File/1_Middleware/Algorithm/Quaternion
+    User_File/1_Middleware/Algorithm/Filter/EKF
 )
 
 # Add project symbols (macros)

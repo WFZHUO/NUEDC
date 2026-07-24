@@ -25,6 +25,7 @@
 #include "bsp_arkey.h"
 #include "bsp_w25q64jv.h"
 #include "bsp_power.h"
+#include "bsp_bmi088.h"
 #include "dvc_serialplot.h"
 #include "dvc_motor_dji.h"
 #include "dvc_vofa.h"
@@ -76,6 +77,11 @@ float DR16_Left_X, DR16_Left_Y, DR16_Right_X, DR16_Right_Y, DR16_Yaw, DR16_Switc
 
 // ADC检测电源输入电压
 float VCC_IN_Voltage = 0.0f;
+
+// BMI088 EKF姿态
+float BMI088_EKF_Roll = 0.0f;
+float BMI088_EKF_Pitch = 0.0f;
+float BMI088_EKF_Yaw = 0.0f;
 
 // 全局初始化完成标志位
 bool init_finished = false;
@@ -147,6 +153,22 @@ void UART5_Callback(uint8_t *Buffer, uint16_t Length)
 }
 
 /**
+ * @brief SPI2任务回调函数
+ */
+void SPI2_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_Length, uint16_t Rx_Length)
+{
+    BSP_BMI088.SPI_RxCpltCallback(Tx_Buffer, Rx_Buffer, Tx_Length, Rx_Length);
+}
+
+/**
+ * @brief GPIO外部中断回调函数
+ */
+extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    BSP_BMI088.GPIO_EXTI_Callback(GPIO_Pin);
+}
+
+/**
  * @brief USB任务回调函数
  */
 void USB0_Callback(uint8_t *Buffer, uint32_t Length)
@@ -189,7 +211,8 @@ void OSPI1_Callback(enum Enum_OSPI_Operation Operation, uint8_t *Buffer,
  */
 void Task1ms_Callback()
 {
-    // 1ms任务
+    // BMI088数据请求、在线状态、姿态与运动学更新
+    BSP_BMI088.TIM_1ms_PeriodElapsedCallback();
 
     // 按键状态更新
     if(Key.isPressed)
@@ -237,6 +260,10 @@ void Task1ms_Callback()
     DR16_Yaw = DR16.Get_Yaw();
     DR16_Switch_L = DR16.Get_Left_Switch();
     DR16_Switch_R = DR16.Get_Right_Switch();
+
+    BMI088_EKF_Roll = BSP_BMI088.Get_EKF_Roll();
+    BMI088_EKF_Pitch = BSP_BMI088.Get_EKF_Pitch();
+    BMI088_EKF_Yaw = BSP_BMI088.Get_EKF_Yaw();
 
     Serialplot.TIM_1ms_Write_PeriodElapsedCallback();
 
@@ -339,14 +366,14 @@ void Task_Init()
                         &Chassis_Now_Omega,
                         &Chassis_Target_Velocity_X,
                         &Chassis_Target_Omega,
+                        &BMI088_EKF_Roll,
+                        &BMI088_EKF_Pitch,
+                        &BMI088_EKF_Yaw,
+                        &VCC_IN_Voltage,
                         &DR16_Left_X,
                         &DR16_Left_Y,
                         &DR16_Right_X,
-                        &DR16_Right_Y,
-                        &DR16_Yaw,
-                        &DR16_Switch_L,
-                        &DR16_Switch_R,
-                        &VCC_IN_Voltage);
+                        &DR16_Right_Y);
 
     // 初始化波形
     Waveform_Sine.Init();
@@ -367,6 +394,12 @@ void Task_Init()
     OSPI_Init(&hospi1, OSPI1_Callback);
     // 初始化ADC1
     ADC_Init(&hadc1, ADC_BUFFER_SIZE);
+    // 初始化SPI2通用驱动与BMI088
+    SPI_Init(&hspi2, SPI2_Callback);
+    if (BSP_BMI088.Init(&hspi2) == BMI088_Init_Status_SUCCESS)
+    {
+        BSP_BMI088.Start_Gyro_Calibration();
+    }
 
     // 定时器中断初始化
     HAL_TIM_Base_Start_IT(&htim7);

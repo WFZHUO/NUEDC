@@ -121,6 +121,7 @@ int main(void)
   MX_USART10_UART_Init();
   MX_UART5_Init();
   MX_ADC1_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
   Task_Init();
