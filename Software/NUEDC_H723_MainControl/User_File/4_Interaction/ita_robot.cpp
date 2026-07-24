@@ -1,6 +1,6 @@
 /**
  * @file ita_robot.cpp
- * @author WangFonzhuo
+ * @author WangFangzhuo
  * @brief 整车人机交互与操作逻辑
  * @version 1.0
  * @date 2026-07-18
@@ -11,17 +11,26 @@
 #include "ita_robot.h"
 #include "alg_basic.h"
 
+/* Macros --------------------------------------------------------------------*/
+
+/* Types ---------------------------------------------------------------------*/
+
 /* Variables -----------------------------------------------------------------*/
 
+// 整车人机交互控制类
 Class_Robot Robot;
+
+/* Function prototypes -------------------------------------------------------*/
 
 /* Function definitions ------------------------------------------------------*/
 
 /**
  * @brief 初始化整车操作逻辑
+ *
+ * @param __DR16 DR16遥控器对象
+ * @param __Chassis 两轮差速底盘对象
  */
-void Class_Robot::Init(Class_DR16 *__DR16,
-                       Class_Chassis *__Chassis)
+void Class_Robot::Init(Class_DR16 *__DR16, Class_Chassis *__Chassis)
 {
     DR16 = __DR16;
     Chassis = __Chassis;
@@ -30,8 +39,7 @@ void Class_Robot::Init(Class_DR16 *__DR16,
 
     if (Chassis != nullptr)
     {
-        Chassis->Set_Control_State(
-            Chassis_Control_State_DISABLE);
+        Chassis->Set_Control_State(Chassis_Control_State_DISABLE);
     }
 }
 
@@ -43,26 +51,18 @@ void Class_Robot::Init(Class_DR16 *__DR16,
  */
 float Class_Robot::Apply_Dead_Zone(float Input) const
 {
-    Input = Basic_Math_Constrain(
-        Input,
-        -1.0f,
-        1.0f);
+    Input = Basic_Math_Constrain(Input, -1.0f, 1.0f);
 
-    const float input_abs =
-        Basic_Math_Abs(Input);
+    const float input_abs = Basic_Math_Abs(Input);
 
     if (input_abs <= DR16_Dead_Zone)
     {
         return (0.0f);
     }
 
-    const float output_abs =
-        (input_abs - DR16_Dead_Zone) /
-        (1.0f - DR16_Dead_Zone);
+    const float output_abs = (input_abs - DR16_Dead_Zone) / (1.0f - DR16_Dead_Zone);
 
-    return ((Input >= 0.0f) ?
-            output_abs :
-            -output_abs);
+    return ((Input >= 0.0f) ? output_abs : -output_abs);
 }
 
 /**
@@ -85,11 +85,9 @@ void Class_Robot::Disable_Chassis()
      *
      * 仅在状态发生变化时调用，避免每1ms重复清空控制器。
      */
-    if (Chassis->Get_Control_State() !=
-        Chassis_Control_State_DISABLE)
+    if (Chassis->Get_Control_State() != Chassis_Control_State_DISABLE)
     {
-        Chassis->Set_Control_State(
-            Chassis_Control_State_DISABLE);
+        Chassis->Set_Control_State(Chassis_Control_State_DISABLE);
     }
 }
 
@@ -98,8 +96,7 @@ void Class_Robot::Disable_Chassis()
  */
 void Class_Robot::TIM_1ms_Control_PeriodElapsedCallback()
 {
-    if (DR16 == nullptr ||
-        Chassis == nullptr)
+    if (DR16 == nullptr || Chassis == nullptr)
     {
         return;
     }
@@ -112,87 +109,31 @@ void Class_Robot::TIM_1ms_Control_PeriodElapsedCallback()
      * MIDDLE、DOWN和所有拨杆过渡状态均按失能处理，
      * 避免拨杆切换过程中出现非预期运动。
      */
-    const bool dr16_online =
-        (DR16->Get_DR16_Status() ==
-         DR16_Status_ENABLE);
+    const bool dr16_online = (DR16->Get_DR16_Status() == DR16_Status_ENABLE);
 
-    const bool chassis_enable_request =
-        (DR16->Get_Right_Switch() ==
-         DR16_Switch_Status_UP);
+    const bool chassis_enable_request = (DR16->Get_Right_Switch() == DR16_Switch_Status_UP);
 
-    if (!dr16_online ||
-        !chassis_enable_request)
+    if (!dr16_online || !chassis_enable_request)
     {
         Disable_Chassis();
         return;
     }
 
-    if (Chassis->Get_Control_State() !=
-        Chassis_Control_State_NORMAL)
+    if (Chassis->Get_Control_State() != Chassis_Control_State_NORMAL)
     {
-        Chassis->Set_Control_State(
-            Chassis_Control_State_NORMAL);
+        Chassis->Set_Control_State(Chassis_Control_State_NORMAL);
     }
 
     Chassis_Control_Enable = true;
 
     // 左摇杆Y轴控制底盘前进/后退
-    const float target_velocity_x =
-        Apply_Dead_Zone(DR16->Get_Left_Y()) *
-        Chassis_Max_Velocity_X *
-        ROBOT_CHASSIS_VELOCITY_X_SIGN;
+    const float target_velocity_x = Apply_Dead_Zone(DR16->Get_Left_Y()) * Chassis_Max_Velocity_X * ROBOT_CHASSIS_VELOCITY_X_SIGN;
 
     // 左摇杆X轴控制底盘旋转
-    const float target_omega =
-        Apply_Dead_Zone(DR16->Get_Left_X()) *
-        Chassis_Max_Omega *
-        ROBOT_CHASSIS_OMEGA_SIGN;
+    const float target_omega = Apply_Dead_Zone(DR16->Get_Left_X()) * Chassis_Max_Omega * ROBOT_CHASSIS_OMEGA_SIGN;
 
-    Chassis->Set_Target_Velocity_X(
-        target_velocity_x);
-
-    Chassis->Set_Target_Omega(
-        target_omega);
-}
-
-/**
- * @brief 设置底盘最大前进/后退线速度
- */
-void Class_Robot::Set_Chassis_Max_Velocity_X(
-    float __Max_Velocity_X)
-{
-    if (__Max_Velocity_X > 0.0f)
-    {
-        Chassis_Max_Velocity_X =
-            __Max_Velocity_X;
-    }
-}
-
-/**
- * @brief 设置底盘最大旋转角速度
- */
-void Class_Robot::Set_Chassis_Max_Omega(
-    float __Max_Omega)
-{
-    if (__Max_Omega > 0.0f)
-    {
-        Chassis_Max_Omega =
-            __Max_Omega;
-    }
-}
-
-/**
- * @brief 设置DR16摇杆死区
- */
-void Class_Robot::Set_DR16_Dead_Zone(
-    float __Dead_Zone)
-{
-    if (__Dead_Zone >= 0.0f &&
-        __Dead_Zone < 1.0f)
-    {
-        DR16_Dead_Zone =
-            __Dead_Zone;
-    }
+    Chassis->Set_Target_Velocity_X(target_velocity_x);
+    Chassis->Set_Target_Omega(target_omega);
 }
 
 /*----------------------------------------------------------------------------*/

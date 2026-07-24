@@ -66,11 +66,7 @@ void Class_Power::TIM_10ms_Update_PeriodElapsedCallback()
         return;
     }
 
-    float voltage =
-        ADC_Get_Source_Voltage(
-            ADC_Handler,
-            Voltage_Divider_Ratio
-        );
+    float voltage = ADC_Get_Source_Voltage(ADC_Handler, Voltage_Divider_Ratio);
 
     /*
      * ADC DMA刚启动时缓冲区可能还没有有效数据。
@@ -100,14 +96,11 @@ void Class_Power::TIM_10ms_Update_PeriodElapsedCallback()
             Voltage_Filter_Index = 0U;
         }
 
-        Average_Power_Voltage =
-            Voltage_Filter_Sum /
-            static_cast<float>(Valid_Sample_Number);
+        Average_Power_Voltage = Voltage_Filter_Sum / static_cast<float>(Valid_Sample_Number);
     }
     else
     {
-        Voltage_Filter_Sum -=
-            Voltage_Filter_Buffer[Voltage_Filter_Index];
+        Voltage_Filter_Sum -= Voltage_Filter_Buffer[Voltage_Filter_Index];
 
         Voltage_Filter_Buffer[Voltage_Filter_Index] = voltage;
         Voltage_Filter_Sum += voltage;
@@ -119,9 +112,7 @@ void Class_Power::TIM_10ms_Update_PeriodElapsedCallback()
             Voltage_Filter_Index = 0U;
         }
 
-        Average_Power_Voltage =
-            Voltage_Filter_Sum /
-            static_cast<float>(POWER_VOLTAGE_FILTER_SAMPLE_NUMBER);
+        Average_Power_Voltage = Voltage_Filter_Sum / static_cast<float>(POWER_VOLTAGE_FILTER_SAMPLE_NUMBER);
     }
 
     /*
@@ -166,11 +157,7 @@ void Class_Power::Reset_Voltage_Monitor()
     Power_Voltage = 0.0f;
     Average_Power_Voltage = 0.0f;
 
-    memset(
-        Voltage_Filter_Buffer,
-        0,
-        sizeof(Voltage_Filter_Buffer)
-    );
+    memset(Voltage_Filter_Buffer, 0, sizeof(Voltage_Filter_Buffer));
 
     Voltage_Filter_Sum = 0.0f;
     Voltage_Filter_Index = 0U;
